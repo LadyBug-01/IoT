@@ -14,56 +14,35 @@ Gestion Intelligente de l'Éveil : Détection de présence en amont via un capte
 En combinant un microcontrôleur ESP32, une plateforme Cloud (Blynk) et une approche de sécurité multicouche, l'objectif est de concevoir un mécanisme de verrouillage robuste doté de protections avancées contre les intrusions physiques et numériques.
 
 2. Architecture du Système
- Le système est structuré selon le modèle d'architecture IoT standardisé en couches, assurant une séparation claire entre l'acquisition des données, le traitement local et la supervision Cloud.
-┌─────────────────────┐
-                    │     Utilisateur     │
-                    │  (Blynk Mobile/Web) │
-                    └──────────┬──────────┘
-                               │
-                               │ WiFi / Internet (SSL/TLS Port 443)
-                               │
-                    ┌──────────▼──────────┐
-                    │     Cloud Blynk     │
-                    │ Dashboard & Events  │
-                    └──────────┬──────────┘
-                               │
-                               │ WiFi 
-                               │
-                    ┌──────────▼──────────┐
-                    │        ESP32        │
-                    │  Unité de contrôle  │
-                    └───────┬─────┬───────┘
-                            │     │
-            ┌───────────────┘     └───────────────┐
-            │                                     │
-    ┌───────▼────────┐                    ┌────────▼────────┐
-    │  Capteur PIR   │                    │      RFID       │
-    │ Détection mouv.│                    │ Vérification ID │
-    └────────────────┘                    └─────────────────┘
-                            │
-                            ▼
-                 ┌───────────────────┐
-                 │ Logique de sécurité│
-                 │ (MFA / BruteForce)│
-                 └─────────┬─────────┘
-                           │
-            ┌──────────────┼──────────────┐
-            │              │              │
-            ▼              ▼              ▼
-      ┌─────────┐    ┌─────────┐    ┌─────────┐
-      │ LCD I2C │    │ Buzzer  │    │  Servo  │
-      │ Messages│    │  Alarme │    │  Porte  │
-      └─────────┘    └─────────┘    └─────────┘
+ Le système est structuré selon le modèle d'architecture IoT standardisé, organisé en couches successives pour assurer une séparation claire entre l'acquisition des données, le traitement local et la supervision distante :
 
+Couche Utilisateur (Interface Graphique) :
 
-Description des Couches :
-Couche de Perception (Capteurs) : Le module RFID acquiert l'identifiant unique de la carte. Le capteur PIR détecte le mouvement à l'approche de la zone.
+Application Mobile / Web Blynk : Permet à l'utilisateur de recevoir des notifications d'alerte en temps réel, de valider le second facteur d'authentification (2FA) via un bouton virtuel dédié, ou de forcer l'ouverture manuelle de la porte.
 
-Couche de Traitement (ESP32) : Cerveau du système. Il exécute les algorithmes de temporisation du MFA, gère le compteur de blocage Anti-Brute-Force, pilote les périphériques et orchestre la communication réseau.
+Couche Cloud (Supervision & Routage) :
 
-Couche d'Action (Actionneurs) : Le Servo-moteur simule le verrou de la porte, le Buzzer assure la dissuasion sonore, le LCD I2C fournit un retour visuel direct et la LED verte confirme l'état de fonctionnement ou d'accès.
+Serveur Blynk Cloud : Assure le pont de communication sécurisé (via protocole SSL/TLS sur le Port 443) entre l'application mobile et le microcontrôleur. Il gère l'historique des événements et l'envoi des notifications push.
 
-Couche Cloud & Utilisateur (Blynk) : Permet la supervision en temps réel, l'envoi de notifications push critiques à l'administrateur, et sert de second facteur de validation pour l'ouverture.
+Couche de Traitement Central (Logique Métier) :
+
+Microcontrôleur ESP32 : Cerveau du système connecté au WiFi. Il héberge et exécute les algorithmes de sécurité (comparaison de l'UID RFID, gestion du compteur d'erreurs anti-brute-force, temporisation des 30 secondes du MFA, et commande des actionneurs).
+
+Couche de Perception (Capteurs / Entrées) :
+
+Capteur de mouvement PIR : Détecte une présence humaine à l'approche de la porte et réveille l'interface visuelle.
+
+Module RFID-RC522 : Lit l'identifiant unique (UID) du badge de l'utilisateur et transmet l'information au processeur pour vérification.
+
+Couche d'Action (Actionneurs / Sorties) :
+
+Servo-moteur : Reçoit le signal PWM de l'ESP32 pour pivoter à 90° et simuler l'ouverture physique du pêne de la porte.
+
+Écran LCD (via protocole I2C) : Affiche en temps réel l'état du système (Prêt, Accès Refusé, Système Verrouillé, Attente 2FA).
+
+Buzzer Piézoélectrique : Émet un signal sonore strident en cas d'accès refusé ou de blocage de sécurité.
+
+Diode LED Verte : Fournit un indicateur lumineux d'état (s'allume en continu lors de la détection de mouvement ou de l'ouverture).
 
 3. Composants Utilisés et Câblage
 Liste du Matériel :
