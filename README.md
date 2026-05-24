@@ -63,6 +63,7 @@ Buzzer piézoélectrique
 LED Verte + Résistance (220 ohms)
 
 4. Instructions d'Exécution
+
 Étape 1 : Configuration de l'environnement de développement
 Ouvrez l'IDE Arduino ou connectez-vous sur votre espace de simulation Wokwi.
 
